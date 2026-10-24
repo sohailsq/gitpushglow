@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>From Git Push to Production</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#05070a;--tx:#e6edf3;--mu:#8b96a8;--cy:#22d3ee;--vi:#a78bfa;--gr:#34d399;--rd:#f87171;--sans:'Space Grotesk','Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 20px}
+svg{display:block;width:min(100%,calc((100vh - 110px)*.8));max-width:760px;border-radius:20px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-top:14px;font-size:14px;color:var(--mu)}
+button{font:500 14px var(--sans);background:#0e141d;color:var(--tx);border:1px solid #243042;border-radius:8px;padding:10px 16px;cursor:pointer}
+button:hover{border-color:var(--cy)}
+button.p{border-color:var(--cy);color:var(--cy)}
+label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.hl{font:700 76px var(--sans);letter-spacing:-1px;fill:#fff}
+.sb{font:500 30px var(--sans);fill:var(--mu);letter-spacing:1px}
+.sig{font:400 17px var(--mono);fill:#4b5566;letter-spacing:3px;text-anchor:middle}
+.stt{font:500 26px var(--mono);fill:var(--cy);text-anchor:middle;transition:fill .4s}
+.stt.bad{fill:var(--rd)}.stt.good{fill:var(--gr)}
+.num{font:500 20px var(--mono);fill:var(--vi)}
+.nm{font:700 34px var(--sans);fill:#9aa6b6;transition:fill .5s}
+.cmd{font:500 22px var(--mono);fill:#5f6b7d;transition:fill .5s}
+.sub{font:400 20px var(--sans);fill:#556070;transition:fill .5s}
+.on .nm{fill:#fff}.on .cmd{fill:var(--cy)}.on .sub{fill:#aeb9c8}.fail .cmd{fill:var(--rd)}.ok .num{fill:var(--gr)}
+.lf{fill:#0c1018;stroke:rgba(167,139,250,.35);stroke-width:1}
+.rt{fill:#080b11;stroke:rgba(167,139,250,.35);stroke-width:1}
+.tp{fill:rgba(255,255,255,.035);stroke:rgba(167,139,250,.55);stroke-width:1;transition:fill .5s,stroke .5s}
+.on .tp{fill:rgba(34,211,238,.14);stroke:var(--cy)}
+.ok .tp{fill:rgba(52,211,153,.14);stroke:var(--gr)}
+.fail .tp{fill:rgba(248,113,113,.14);stroke:var(--rd)}
+.halo{fill:none;stroke:var(--cy);stroke-width:2;opacity:0;transition:opacity .5s}
+.cur .halo{opacity:1;filter:url(#g)}.done .halo{opacity:.4}
+.ok .halo{stroke:var(--gr);opacity:1;filter:url(#g)}.fail .halo{stroke:var(--rd);opacity:1;filter:url(#g)}
+.ln{fill:rgba(167,139,250,.5);transition:fill .5s}.on .ln{fill:var(--cy)}
+.cl{stroke:rgba(167,139,250,.5);stroke-width:2}
+.cm{fill:#2a3142}.on .cm{fill:#475069}.cm.hi{fill:#8b5cf6}.on .cm.hi{fill:var(--cy)}
+.ring{fill:none;stroke:var(--cy);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.on .ring{animation:rg 1.5s ease-out 2}
+@keyframes rg{from{transform:scale(1);opacity:.9}to{transform:scale(3.2);opacity:0}}
+.trk{fill:rgba(255,255,255,.07)}
+.bar{fill:var(--cy);transform-box:fill-box;transform-origin:left center;transform:scaleX(0);transition:transform .9s ease,fill .4s}
+.on .bar{transform:scaleX(1)}
+.pass .bar,.fail .b0,.fail .b1{fill:var(--gr)}.fail .b2{fill:var(--rd)}
+.res{opacity:0;transition:opacity .4s;color:var(--mu)}
+.pass .res,.fail .res{opacity:1}.pass .res{color:var(--gr)}.fail .res{color:var(--rd)}
+.rc{fill:rgba(255,255,255,.04);stroke:currentColor;stroke-width:2}
+.chk,.xx{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pass .xx,.fail .chk{display:none}
+.pl{transform:translateY(calc(var(--k)*var(--g,5)*-1px));transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.on .pl{--g:18}
+.tg{fill:var(--cy);font:500 18px var(--mono);opacity:0;transition:opacity .5s .8s}.on .tg{opacity:1}
+.tfx{fill:rgba(167,139,250,.75);font:500 20px var(--mono);transition:fill .5s}.on .tfx{fill:var(--cy)}
+.cb{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}.on .cb{opacity:1;transform:none}
+.nw{opacity:.4;transition:opacity .6s .7s}.on .nw{opacity:1}.on .od{opacity:.3;transition:opacity .6s 1.2s}
+.vl{fill:#9aa6b6;font:500 15px var(--mono);text-anchor:middle}
+.spark{fill:none;stroke:var(--cy);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:300;stroke-dashoffset:300;transition:stroke-dashoffset 1.5s ease}
+.on .spark{stroke-dashoffset:0}
+.hd{fill:var(--gr);opacity:0;transition:opacity .5s 1.2s}.on .hd{opacity:1}
+.conn{stroke:rgba(167,139,250,.35);stroke-width:2}
+.conn.on{stroke:var(--cy);stroke-dasharray:6 8;animation:fl .8s linear infinite}
+.conn.ok{stroke:var(--gr);animation:none;stroke-dasharray:none}
+@keyframes fl{to{stroke-dashoffset:-14}}
+.fbk path{fill:none;stroke:rgba(167,139,250,.45);stroke-width:2;stroke-dasharray:4 8}
+.fbk.on path{stroke:var(--cy);animation:fl .8s linear infinite}
+.fbt{font:400 17px var(--mono);fill:#5f6b7d;text-anchor:end}.fbk.on .fbt{fill:var(--cy)}
+#sg{transition:transform 1s cubic-bezier(.6,0,.2,1)}
+.sgl{fill:var(--cy);filter:url(#g)}#sg.bad .sgl{fill:var(--rd)}#sg.ok .sgl{fill:var(--gr)}
+@media (prefers-reduced-motion:reduce){#sg,.pl,.bar,.spark{transition-duration:.01s}}
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1080 1350" role="img" aria-label="Animated CI/CD pipeline from git push to monitored production deployment">
+<defs>
+<pattern id="gr" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="rgba(255,255,255,.04)"/></pattern>
+<radialGradient id="vg" cx="18%" cy="45%" r="65%"><stop offset="0" stop-color="#22d3ee" stop-opacity=".09"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></radialGradient>
+<filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6"/></marker>
+</defs>
+<rect width="1080" height="1350" fill="#06080c"/>
+<rect width="1080" height="1350" fill="url(#gr)"/>
+<rect width="1080" height="1350" fill="url(#vg)"/>
+<text class="hl" x="60" y="120">FROM GIT PUSH</text>
+<text class="hl" x="60" y="200" style="fill:#22d3ee">TO PRODUCTION</text>
+<text class="sb" x="62" y="256">Inside a Modern CI/CD Pipeline</text>
+<g id="lines"></g>
+<g id="fbw" class="fbk">
+<path d="M940,1090H1034V340H960" marker-end="url(#ah)"/>
+<path d="M1034,490H960" marker-end="url(#ah)"/>
+<text class="fbt" x="1020" y="1140">feedback</text>
+</g>
+<g id="stages"></g>
+<g id="sg" style="transform:translate(190px,340px)"><circle class="sgl" r="14"/><circle r="5" fill="#fff"/></g>
+<text id="stt" class="stt" x="540" y="1218">Overview · press Push commit</text>
+<text class="sig" x="540" y="1308">SOHAIL SHAH QUADRI | DEVOPS &amp; SOFTWARE ENGINEERING</text>
+</svg>
+<div class="ctl">
+<button id="go" class="p">Push commit</button>
+<button id="rp">Replay</button>
+<label><input type="checkbox" id="fl"> Simulate failing test</label>
+</div>
+<script>
+const Y=i=>340+i*150;
+const sl=(w,h,t)=>`<polygon class="lf" points="${-w},0 0,${h} 0,${h+t} ${-w},${t}"/><polygon class="rt" points="0,${h} ${w},0 ${w},${t} 0,${h+t}"/><polygon class="tp" points="0,${-h} ${w},0 0,${h} ${-w},0"/>`;
+const ha=(w,h)=>`<polygon class="halo" points="0,${-h-7} ${w+12},0 0,${h+7} ${-w-12},0"/>`;
+const base=sl(78,39,10)+ha(78,39);
+const F=s=>`<g transform="scale(1,.5) rotate(45)">${s}</g>`;
+const IC=[
+base+F('<rect class="ln" x="-44" y="-38" width="70" height="7" rx="2"/><rect class="ln" x="-44" y="-22" width="48" height="7" rx="2"/><rect class="ln" x="-44" y="-6" width="58" height="7" rx="2"/><line class="cl" x1="-34" y1="30" x2="34" y2="30"/><circle class="cm" cx="-34" cy="30" r="6"/><circle class="cm" cx="0" cy="30" r="6"/><circle class="cm hi" cx="34" cy="30" r="7"/><circle class="ring" cx="34" cy="30" r="7"/>'),
+base+F([0,1,2].map(j=>`<rect class="trk" x="-44" y="${-34+j*24}" width="88" height="10" rx="3"/><rect class="bar b${j}" x="-44" y="${-34+j*24}" width="88" height="10" rx="3" style="transition-delay:${j*.45}s"/>`).join(''))+'<g class="res" transform="translate(100,-30)"><circle class="rc" r="16"/><path class="chk" d="M-7,0L-2,6L8,-6"/><path class="xx" d="M-6,-6L6,6M6,-6L-6,6"/></g>',
+'<g transform="translate(0,26)">'+ha(60,30)+[0,1,2,3].map(k=>`<g class="pl" style="--k:${k}"><polygon class="tp" points="0,-30 60,0 0,30 -60,0"/></g>`).join('')+'</g><text class="tg" x="86" y="-34">v1.0.0</text>',
+base+F('<text class="tfx" x="-40" y="34">.tf</text>')+[[0,-12],[-30,4],[30,4]].map((p,j)=>`<g class="cb" style="transition-delay:${.3+j*.35}s"><g transform="translate(${p[0]},${p[1]-8})">${sl(18,9,12)}</g></g>`).join(''),
+base+'<g class="od" transform="translate(-28,0)">'+sl(26,13,8)+'</g><g class="nw" transform="translate(28,0)">'+sl(26,13,8)+'</g><text class="vl" x="-28" y="-20">v1</text><text class="vl" x="28" y="-20">v2</text>',
+base+F('<polyline class="spark" points="-46,20 -30,8 -16,14 -2,-10 12,0 26,-18 46,-8"/>')+'<circle class="hd" cx="100" cy="-30" r="11"/>'
+];
+const S=[
+['SOURCE CONTROL','git push → webhook trigger','Terminal → GitHub repository'],
+['CONTINUOUS INTEGRATION','BUILD → TEST → VALIDATE','Jenkins  or  GitHub Actions'],
+['CONTAINERIZATION','docker build → docker push','App · runtime · deps · config → registry'],
+['INFRASTRUCTURE AS CODE','terraform plan → terraform apply','VM · network · security group'],
+['CLOUD DEPLOYMENT','DEPLOY → VERIFY → RELEASE','Pull image · blue/green · health check'],
+['OBSERVABILITY','MONITOR → ALERT → IMPROVE','Latency · errors · CPU · logs']
+];
+const MSG=['Commit pushed · webhook triggers CI','Pipeline running · lint · unit tests','Image built · tagged · pushed to registry','Infrastructure provisioned from code','Health check passed · traffic switched','Metrics healthy · feedback loop active'];
+document.getElementById('stages').innerHTML=S.map((s,i)=>`<g class="st" transform="translate(0,${Y(i)})"><g transform="translate(190,0)">${IC[i]}</g><text class="num" x="330" y="-26">0${i+1}</text><text class="nm" x="330" y="6">${s[0]}</text><text class="cmd" x="330" y="36">${s[1]}</text><text class="sub" x="330" y="62">${s[2]}</text></g>`).join('');
+document.getElementById('lines').innerHTML=[0,1,2,3,4].map(i=>`<line class="conn" x1="190" x2="190" y1="${Y(i)+52}" y2="${Y(i+1)-42}"/>`).join('');
+const sts=[...document.querySelectorAll('.st')],cn=[...document.querySelectorAll('.conn')],sg=document.getElementById('sg'),stt=document.getElementById('stt'),fb=document.getElementById('fbw');
+const W=ms=>new Promise(r=>setTimeout(r,ms));
+let tok=0;
+function reset(){sts.forEach(s=>s.setAttribute('class','st'));cn.forEach(c=>c.setAttribute('class','conn'));fb.setAttribute('class','fbk');sg.setAttribute('class','');sg.style.transform='translate(190px,'+Y(0)+'px)';stt.textContent='Overview · press Push commit';stt.setAttribute('class','stt')}
+async function run(){
+const id=++tok;reset();await W(600);
+for(let i=0;i<6;i++){
+if(i>0)cn[i-1].classList.add('on');
+sg.style.transform='translate(190px,'+Y(i)+'px)';
+await W(i?1050:300);if(id!==tok)return;
+if(i>0){sts[i-1].classList.remove('cur');sts[i-1].classList.add('done')}
+sts[i].classList.add('on','cur');stt.textContent=MSG[i];
+if(i===1){
+await W(1800);if(id!==tok)return;
+if(document.getElementById('fl').checked){sts[1].classList.remove('cur');sts[1].classList.add('fail');stt.textContent='Tests failed · pipeline halted · deploy blocked';stt.classList.add('bad');sg.classList.add('bad');return}
+sts[1].classList.add('pass');stt.textContent='Tests passed · build validated';await W(900);
+}else await W(1800);
+if(id!==tok)return;
+}
+sts[5].classList.remove('cur');
+for(const s of sts){s.classList.remove('done');s.classList.add('ok');await W(150);if(id!==tok)return}
+cn.forEach(c=>c.classList.add('ok'));sg.classList.add('ok');fb.classList.add('on');
+stt.textContent='Production healthy · loop running';stt.classList.add('good');
+}
+document.getElementById('go').onclick=run;
+document.getElementById('rp').onclick=run;
+</script>
+</body>
+</html>
